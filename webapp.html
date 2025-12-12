@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Trade Master Fundamental</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            color: #fff;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* Loading Screen */
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        #loading-screen.fade-out {
+            animation: fadeOut 0.8s ease-out forwards;
+        }
+
+        .logo-container {
+            text-align: center;
+            animation: scaleIn 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .logo-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            animation: bounce 2s infinite;
+        }
+
+        .logo-text {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(90deg, #00ff88, #00d4ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 2px;
+            animation: shimmer 2s infinite;
+        }
+
+        .logo-subtitle {
+            font-size: 14px;
+            color: #a8a8a8;
+            margin-top: 10px;
+            letter-spacing: 4px;
+        }
+
+        .spinner {
+            margin-top: 40px;
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top: 4px solid #00ff88;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        /* Main Content */
+        #main-content {
+            display: none;
+            padding: 20px;
+            animation: slideUp 0.5s ease-out;
+        }
+
+        #main-content.show {
+            display: block;
+        }
+
+        .header {
+            text-align: center;
+            padding: 30px 0;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #00ff88, #00d4ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header p {
+            color: #a8a8a8;
+            font-size: 14px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid transparent;
+            border-radius: 15px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, #00ff88, #00d4ff);
+            box-shadow: 0 8px 20px rgba(0, 255, 136, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .tab:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(0, 255, 136, 0.3);
+        }
+
+        .news-container {
+            display: grid;
+            gap: 15px;
+        }
+
+        .news-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            animation: slideInUp 0.5s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .news-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, #00ff88, #00d4ff);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .news-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .news-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 255, 136, 0.2);
+            border-color: rgba(0, 255, 136, 0.3);
+        }
+
+        .news-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .news-pair {
+            background: linear-gradient(135deg, #00ff88, #00d4ff);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 12px;
+            color: #0f0c29;
+        }
+
+        .impact-badge {
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .impact-yuqori {
+            background: rgba(255, 0, 0, 0.2);
+            color: #ff4444;
+            border: 1px solid #ff4444;
+        }
+
+        .impact-orta {
+            background: rgba(255, 165, 0, 0.2);
+            color: #ffaa00;
+            border: 1px solid #ffaa00;
+        }
+
+        .impact-past {
+            background: rgba(0, 255, 136, 0.2);
+            color: #00ff88;
+            border: 1px solid #00ff88;
+        }
+
+        .news-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+
+        .news-time {
+            color: #a8a8a8;
+            font-size: 13px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .news-data {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .data-item {
+            text-align: center;
+        }
+
+        .data-label {
+            font-size: 11px;
+            color: #a8a8a8;
+            margin-bottom: 5px;
+        }
+
+        .data-value {
+            font-size: 14px;
+            font-weight: 700;
+            color: #00d4ff;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #a8a8a8;
+        }
+
+        .empty-state-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .refresh-button {
+            margin-top: 20px;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #00ff88, #00d4ff);
+            border: none;
+            border-radius: 12px;
+            color: #0f0c29;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .refresh-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 20px rgba(0, 255, 136, 0.4);
+        }
+
+        .news-source {
+            font-size: 11px;
+            color: #00d4ff;
+            margin-top: 10px;
+            display: inline-block;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+
+        @keyframes scaleIn {
+            from {
+                transform: scale(0.5);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -100%; }
+            100% { background-position: 200%; }
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideInUp {
+            from {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #00ff88, #00d4ff);
+            border-radius: 10px;
+        }
+
+        .loading-news {
+            text-align: center;
+            padding: 40px;
+            color: #a8a8a8;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            margin: 0 auto 20px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid #00ff88;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+        <div class="logo-container">
+            <div class="logo-icon">📊</div>
+            <div class="logo-text">TRADE MASTER</div>
+            <div class="logo-subtitle">FUNDAMENTAL</div>
+        </div>
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Main Content -->
+    <div id="main-content">
+        <div class="header">
+            <h1>📊 Bozor Yangiliklari</h1>
+            <p>Bugungi fundamental ta'sirlar</p>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" data-impact="all">📋 Barchasi</div>
+            <div class="tab" data-impact="YUQORI">🔴 Yuqori</div>
+            <div class="tab" data-impact="O'RTA">🟠 O'rta</div>
+            <div class="tab" data-impact="PAST">🟢 Past</div>
+        </div>
+
+        <div id="news-container" class="news-container">
+            <div class="loading-news">
+                <div class="loading-spinner"></div>
+                <p>Yangiliklarni yuklayapman...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Telegram Web App initialization
+        let tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.setHeaderColor('#0f0c29');
+        tg.setBackgroundColor('#0f0c29');
+
+        // Get user ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const userId = urlParams.get('user_id');
+
+        // Sample news data (in production, fetch from backend API)
+        const newsData = [
+            {
+                pair: 'USD',
+                title: 'Non-Farm Payrolls (NFP)',
+                impact: 'YUQORI',
+                datetime: 'Bugun 15:30',
+                actual: '250K',
+                forecast: '200K',
+                previous: '180K',
+                source: 'Forex Factory'
+            },
+            {
+                pair: 'USD',
+                title: 'Federal Funds Rate',
+                impact: 'YUQORI',
+                datetime: 'Bugun 19:00',
+                actual: '5.50%',
+                forecast: '5.25%',
+                previous: '5.00%',
+                source: 'Forex Factory'
+            },
+            {
+                pair: 'EUR',
+                title: 'Consumer Price Index (CPI)',
+                impact: "O'RTA",
+                datetime: 'Bugun 12:00',
+                actual: '3.2%',
+                forecast: '3.0%',
+                previous: '2.9%',
+                source: 'Investing.com'
+            },
+            {
+                pair: 'USD',
+                title: 'Gross Domestic Product (GDP)',
+                impact: 'YUQORI',
+                datetime: 'Bugun 14:00',
+                actual: '2.5%',
+                forecast: '2.3%',
+                previous: '2.1%',
+                source: 'Forex Factory'
+            },
+            {
+                pair: 'GBP',
+                title: 'Unemployment Rate',
+                impact: "O'RTA",
+                datetime: 'Bugun 10:00',
+                actual: '3.8%',
+                forecast: '3.9%',
+                previous: '3.9%',
+                source: 'Investing.com'
+            },
+            {
+                pair: 'EUR',
+                title: 'Retail Sales',
+                impact: 'PAST',
+                datetime: 'Bugun 11:30',
+                actual: '0.5%',
+                forecast: '0.3%',
+                previous: '0.2%',
+                source: 'Forex Factory'
+            },
+            {
+                pair: 'USD',
+                title: 'Manufacturing PMI',
+                impact: 'PAST',
+                datetime: 'Bugun 16:00',
+                actual: '52.1',
+                forecast: '51.5',
+                previous: '51.2',
+                source: 'Investing.com'
+            },
+            {
+                pair: 'JPY',
+                title: 'Trade Balance',
+                impact: "O'RTA",
+                datetime: 'Bugun 08:50',
+                actual: '-¥65B',
+                forecast: '-¥60B',
+                previous: '-¥58B',
+                source: 'Forex Factory'
+            }
+        ];
+
+        let currentFilter = 'all';
+
+        // Initialize app
+        function initApp() {
+            // Show loading screen for 2.5 seconds
+            setTimeout(() => {
+                document.getElementById('loading-screen').classList.add('fade-out');
+                
+                setTimeout(() => {
+                    document.getElementById('loading-screen').style.display = 'none';
+                    document.getElementById('main-content').classList.add('show');
+                    loadNews();
+                }, 800);
+            }, 2500);
+        }
+
+        // Load news
+        function loadNews() {
+            const container = document.getElementById('news-container');
+            
+            // Filter news based on current filter
+            const filteredNews = currentFilter === 'all' 
+                ? newsData 
+                : newsData.filter(news => news.impact === currentFilter);
+
+            if (filteredNews.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <h3>Yangilikar topilmadi</h3>
+                        <p>Bu kategoriyada hozircha yangilikar yo'q</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Render news cards
+            container.innerHTML = filteredNews.map((news, index) => `
+                <div class="news-card" style="animation-delay: ${index * 0.1}s">
+                    <div class="news-header">
+                        <span class="news-pair">${news.pair}</span>
+                        <span class="impact-badge impact-${news.impact.toLowerCase()}">${news.impact}</span>
+                    </div>
+                    <div class="news-title">${news.title}</div>
+                    <div class="news-time">
+                        🕐 ${news.datetime}
+                    </div>
+                    <div class="news-data">
+                        <div class="data-item">
+                            <div class="data-label">Actual</div>
+                            <div class="data-value">${news.actual}</div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-label">Forecast</div>
+                            <div class="data-value">${news.forecast}</div>
+                        </div>
+                        <div class="data-item">
+                            <div class="data-label">Previous</div>
+                            <div class="data-value">${news.previous}</div>
+                        </div>
+                    </div>
+                    <span class="news-source">📡 ${news.source}</span>
+                </div>
+            `).join('');
+        }
+
+        // Tab switching
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('tab')) {
+                // Update active tab
+                document.querySelectorAll('.tab').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+                e.target.classList.add('active');
+
+                // Update filter and reload news
+                currentFilter = e.target.dataset.impact;
+                loadNews();
+            }
+        });
+
+        // Start app
+        initApp();
+
+        // In production, you would fetch news from your backend API:
+        /*
+        async function fetchNews() {
+            try {
+                const response = await fetch(`/api/news?user_id=${userId}`);
+                const data = await response.json();
+                newsData = data.news;
+                loadNews();
+            } catch (error) {
+                console.error('Error fetching news:', error);
+            }
+        }
+        */
+    </script>
+</body>
+</html>
